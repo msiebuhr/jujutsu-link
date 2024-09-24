@@ -1,9 +1,9 @@
 Jujutsu Link
 ============
 
-I've grown quite used to having (`git link
-<something>`)[https://github.com/msiebuhr/git-link] around when needing to
-point to something in git repository, and was missing that in `jj`.
+I've grown quite used to having [`git link
+<something>`](https://github.com/msiebuhr/git-link) around when needing to
+point to something in git repository, and was missing that in `jj`:
 
 ```sh
 # Link to the repository
