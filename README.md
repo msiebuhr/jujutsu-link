@@ -19,6 +19,9 @@ jj-link -r sm LICENSE
 https://github.com/msiebuhr/jujutsu-link/-/blob/ec05f9b865f408b028f3930c88ce2792dbb29269/README
 ```
 
+It works by reading the URL from `jj git remote list` to get both repository
+hostname/path and make a qualified guess at what kind of forge is in use.
+
 Installation
 ------------
 
