@@ -15,12 +15,11 @@ forges = {
         "file_link": "https://{hostname}/{project_path}/-/blob/{git_sha}/{filename}",
         "commit_link": "https://{hostname}/{project_path}/-/commit/{git_sha}",
     },
-    'github':{
+    "github": {
         "repo_link": "https://{hostname}/{project_path}",
         "file_link": "https://{hostname}/{project_path}/-/blob/{git_sha}/{filename}",
         "commit_link": "https://{hostname}/{project_path}/commit/{git_sha}",
-        }
-
+    },
 }
 
 
@@ -71,7 +70,7 @@ def get_git_sha(args):
 def parse_url(args):
     url = args.remote_url
 
-    if url.startswith('https://'):
+    if url.startswith("https://"):
         return urlparse(url)
 
     # Git's URL-format is surprisingly weird in Python
@@ -128,15 +127,15 @@ if __name__ == "__main__":
     # Inelegant way of figuring out what template to use
     if args.filename:
         url_template = forge["file_link"]
-        params['filename'] = args.filename
+        params["filename"] = args.filename
     elif args.revision:
         url_template = forge["commit_link"]
 
     # Fill out remainder of template on demand
-    if '{git_sha}' in url_template:
+    if "{git_sha}" in url_template:
         # Set to default revision to '@'
         args.revision = args.revision if args.revision else "@"
 
-        params['git_sha'] = get_git_sha(args)
+        params["git_sha"] = get_git_sha(args)
 
     print(url_template.format(**params))
