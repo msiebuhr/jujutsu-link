@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import os
+import re
+
+from urllib.parse import urlparse
+
+# TODO: Support --repository DIR, so this will work everywhere
+
+forges = {
+    "gitlab": {
+        "repo_link": "https://{hostname}/{project_path}",
+        "file_link": "https://{hostname}/{project_path}/-/blob/{git_sha}/{filename}",
+        "commit_link": "https://{hostname}/{project_path}/-/commit/{git_sha}",
+    },
+    'github':{
+        "repo_link": "https://{hostname}/{project_path}",
+        "file_link": "https://{hostname}/{project_path}/-/blob/{git_sha}/{filename}",
+        "commit_link": "https://{hostname}/{project_path}/commit/{git_sha}",
+        }
+
+}
+
+
+# Get remotes and verify it's something gitlab-like
+def get_remotes(args):
+    out = subprocess.Popen(
+        ["jj", "git", "remote", "list"], stdout=subprocess.PIPE, encoding="utf-8"
+    ).stdout.readlines()
+
+    return dict(line.split(" ", 2) for line in out)
+
+
+def guess_forge_type(args):
+    if args.forge_type and args.forge_type in forges:
+        return forges[args.forge_type]
+
+    for nickname, forge in forges.items():
+        if nickname in args.remote_url:
+            return forge
+
+    print("ERROR: Could not find out what forge to use")
+    exit(1)
+
+
+def get_git_sha(args):
+    revision = args.revision if args.revision else "@"
+
+    return (
+        subprocess.Popen(
+            [
+                "jj",
+                "log",
+                "--revisions",
+                args.revision,
+                "--template",
+                "commit_id",
+                "--no-graph",
+            ],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+        )
+        .stdout.read()
+        .strip()
+    )
+
+
+# Really ought to use https://github.com/nephila/giturlparse
+def parse_url(args):
+    url = args.remote_url
+
+    if url.startswith('https://'):
+        return urlparse(url)
+
+    # Git's URL-format is surprisingly weird in Python
+    if not "ssh://" in url:
+        url = "ssh://" + url
+
+    # Fix git@<forge>:<group>/<project> to a real path
+    parts = url.split(":")
+    if len(parts) == 3:
+        url = f"{parts[0]}:{parts[1]}/{parts[2]}"
+    if len(parts) == 2:
+        url = f"{parts[0]}/{parts[1]}"
+
+    return urlparse(url)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--revision", default="")
+    parser.add_argument("--remote", default="")
+    parser.add_argument("--forge-type", default=None)
+    parser.add_argument("filename", default=None, nargs="?")
+    args = parser.parse_args()
+
+    remotes = get_remotes(args)
+    if not args.remote:
+        if len(remotes) == 1:
+            args.remote = list(remotes.keys())[0]
+        else:
+            print("ERROR: Multiple remotes - implement logic to pick a default one?")
+            exit(1)
+    if not args.remote in remotes:
+        print(
+            f"ERROR: Unknown remote {args.remote}. Run `jj git remotes list` to see available remotes"
+        )
+        exit(1)
+
+    # Set a remote URL
+    args.remote_url = remotes[args.remote]
+
+    # Find out what forge to use
+    forge = guess_forge_type(args)
+
+    # Parse forge URL
+    url = parse_url(args)
+
+    # Start filling out template
+    url_template = forge["repo_link"]
+    params = {
+        "hostname": url.hostname,
+        "project_path": url.path.strip("/").removesuffix(".git"),
+    }
+
+    # Inelegant way of figuring out what template to use
+    if args.filename:
+        url_template = forge["file_link"]
+        params['filename'] = args.filename
+    elif args.revision:
+        url_template = forge["commit_link"]
+
+    # Fill out remainder of template on demand
+    if '{git_sha}' in url_template:
+        # Set to default revision to '@'
+        args.revision = args.revision if args.revision else "@"
+
+        params['git_sha'] = get_git_sha(args)
+
+    print(url_template.format(**params))
