@@ -89,10 +89,10 @@ def parse_url(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--revision", default="")
-    parser.add_argument("--remote", default="")
-    parser.add_argument("--forge-type", default=None)
-    parser.add_argument("filename", default=None, nargs="?")
+    parser.add_argument("-r", "--revision", default="", help="Revision to link to")
+    parser.add_argument("--remote", default="", help="Remote to use (only needed with more than one remote)")
+    parser.add_argument("--forge-type", default=None, help="If guessing doesn't cut it")
+    parser.add_argument("filename", default=None, nargs="?", help="Link to a filename")
     args = parser.parse_args()
 
     remotes = get_remotes(args)
