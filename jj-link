@@ -90,8 +90,15 @@ def parse_url(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--revision", default="", help="Revision to link to")
-    parser.add_argument("--remote", default="", help="Remote to use (only needed with more than one remote)")
+    parser.add_argument(
+        "--remote",
+        default="",
+        help="Remote to use (only needed with more than one remote)",
+    )
     parser.add_argument("--forge-type", default=None, help="If guessing doesn't cut it")
+    parser.add_argument(
+        "--open", default=False, action="store_true", help="Open the link in a browser"
+    )
     parser.add_argument("filename", default=None, nargs="?", help="Link to a filename")
     args = parser.parse_args()
 
@@ -138,4 +145,7 @@ if __name__ == "__main__":
 
         params["git_sha"] = get_git_sha(args)
 
-    print(url_template.format(**params))
+    if args.open:
+        subprocess.Popen(["xdg-open", url_template.format(**params)])
+    else:
+        print(url_template.format(**params))
