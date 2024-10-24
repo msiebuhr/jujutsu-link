@@ -17,7 +17,7 @@ forges = {
     },
     "github": {
         "repo_link": "https://{hostname}/{project_path}",
-        "file_link": "https://{hostname}/{project_path}/-/blob/{git_sha}/{filename}",
+        "file_link": "https://{hostname}/{project_path}/blob/{git_sha}/{filename}",
         "commit_link": "https://{hostname}/{project_path}/commit/{git_sha}",
     },
 }
